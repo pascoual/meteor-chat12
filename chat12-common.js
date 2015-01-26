@@ -12,8 +12,8 @@ if (typeof Chat12 === "undefined")
  *  // createRoomAllow:
  *  // - who can create a room
  *  createRoomAllow: function (userId) {}, 
- *  // getOnes: return userIds array that can be seen by userId
- *  getOnes: function (userId) {},
+ *  // getContacts: return userIds array that can be seen by userId
+ *  getContacts: function (userId) {},
  *  // getRooms: return roomIds array that can be seen by userId
  *  getRooms: function (userId) {},
  * }
@@ -22,8 +22,26 @@ Chat12.init = function (options) {
   Chat12.Chat121Msgs.sendAllow = options.send121Allow;
   Chat12.Chat12RoomMsgs.sendAllow = options.send12RoomAllow;
   Chat12.Chat12Rooms.createAllow = options.createRoomAllow;
-  Chat12.getOnes = options.getOnes;
-  Chat12.getRooms = options.getRooms;
+  // getContacts = function ([userId])
+  // Location : Client + Server
+  // Params :
+  // - userId: String, optional : user from who you want chat contacts
+  // Return: array of users Ids than we can chat to
+  // Must be client + server function
+  Chat12.getContacts = options.getContacts;
+  // getContactsFileds
+  // Location: Server
+  // Format: same as find format => {fieldName: Boolean}
+  // Allow you to add fields mendatory for your listing name template
+  if (Meteor.isServer)
+    Chat12.getContactsFields = options.getContactsFields ? options.getContactsFileds : {};
+  if (Meteor.isClient) {
+    Chat12.getContactName = options.getContactName;
+    Chat12.getContactAvatar = options.getContactAvatar;
+    Chat12.getContactOrderField = options.getContactOrderField;
+    Chat12.getContactsListClass = options.getContactsListClass;
+  }
+/*  Chat12.getRooms = options.getRooms;*/
 }
 
 /**
@@ -92,7 +110,7 @@ Meteor.methods({
    */
   Chat12InviteToRoom: function (roomId, invitedUserId) {
     var room = Chat12.Chat12Rooms.findOne({_id: roomId});
-    if (room && room.participants.contains(invitedUserId) && Chat12.getOnes(userId).contains(invitedUserId))
+    if (room && room.participants.contains(invitedUserId) && Chat12.getContacts(userId).contains(invitedUserId))
       Chat12.Chat12Rooms.update({_id: roomId}, {$push: {participants: invitedUserId}});
     else
       throw new Meteor.Error( 500, 'You don\'t have right to add user to this room' );
