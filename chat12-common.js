@@ -48,7 +48,7 @@ Chat12.init = function (options) {
  * Generic CallBack
  */
 Chat12.callbackGeneric = function (err, res) {
-    if (typeof err !== undefined)
+    if (typeof err !== "undefined")
       console.log(err);
 };
 
@@ -57,6 +57,9 @@ Chat12.callbackGeneric = function (err, res) {
  */
 Chat12.Chat121Send = function (targetUserId, msg) {
   Meteor.call('Chat121Send', targetUserId, msg, Chat12.callbackGeneric);
+};
+Chat12.Chat121SetRead = function (from) {
+  Meteor.call('Chat121SetRead', from, Chat12.callbackGeneric);
 };
 Chat12.Chat12RoomSend = function (roomId, msg) {
   Meteor.call('Chat12RoomSend', roomId, msg, Chat12.callbackGeneric);
@@ -86,6 +89,15 @@ Meteor.methods({
       Chat12.Chat121Msgs.insert({from: this.userId, to: targetUserId, msg: msg});
     else
       throw new Meteor.Error( 500, 'You don\'t have right to send a message to this user' );
+  },
+  Chat121SetRead: function (from) {
+    Chat12.Chat121Msgs.update({
+      from: from,
+      to: this.userId,
+      readBy: {$nin: [this.userId]}
+    }, {
+      $push: {readBy: this.userId}
+    }, {multi: true});
   },
   Chat12RoomSend: function (roomId, msg) {
     if (Chat12.Chat12RoomMsgs.sendAllow(this.userId, roomId))

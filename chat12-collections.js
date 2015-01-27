@@ -74,7 +74,12 @@ Chat12.Chat121Msgs.attachSchema(new SimpleSchema({
     readBy: {
       type: [String],
       label: "ReadBy",
-      min: 0
+      min: 0,
+      autoValue: function() {
+        if (this.isInsert) {
+          return [];
+        }
+      }
     }
 }));
 
