@@ -19,7 +19,7 @@ Meteor.publish("chat12GetOnes", function () {
 Meteor.publish("chat12GetUnreadMessages", function () {
   if (!this.userId)
     return;
-  return Chat12.Chat121Msgs.find({from: this.userId, to: {$in: Chat12.getContacts(this.userId)}, readBy: {$nin: [this.userId]}});
+  return Chat12.Chat121Msgs.find({from: {$in: Chat12.getContacts(this.userId)}, to: this.userId, readBy: {$nin: [this.userId]}});
 });
 
 /**

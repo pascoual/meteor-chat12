@@ -37,9 +37,11 @@ Chat12.init = function (options) {
     Chat12.getContactsFields = options.getContactsFields ? options.getContactsFileds : {};
   if (Meteor.isClient) {
     Chat12.getContactName = options.getContactName;
-    Chat12.getContactAvatar = options.getContactAvatar;
-    Chat12.getContactOrderField = options.getContactOrderField;
+    Chat12.getContactPortrait = options.getContactPortrait;
+    Chat12.getContactDescription = options.getContactDescription;
+    Chat12.getContactOrder = options.getContactOrder;
     Chat12.getContactsListClass = options.getContactsListClass;
+    Chat12.getRoomPortrait = options.getRoomPortrait;
   }
 /*  Chat12.getRooms = options.getRooms;*/
 }

@@ -7,7 +7,7 @@ Package.describe({
 Package.on_use(function (api) {
   api.versionsFrom('METEOR@1.0');
 
-  api.use(['underscore','mongo', 'aldeed:simple-schema','aldeed:collection2','mizzao:user-status@0.6.3']);
+  api.use(['underscore','mongo', 'aldeed:simple-schema','aldeed:collection2','aldeed:autoform','mizzao:user-status@0.6.3']);
 
   api.add_files(['chat12-client.js'], 'client');
   api.add_files(['chat12-server.js'], 'server');

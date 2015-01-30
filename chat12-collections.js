@@ -126,11 +126,28 @@ Chat12.Chat12RoomMsgs.attachSchema(new SimpleSchema({
 Chat12.Chat12Rooms.attachSchema(new SimpleSchema({
   creator: {
     type: String,
-    label: "Creator"
+    label: "Creator",
+    autoValue: function() {
+      if (this.isInsert) {
+        return Meteor.userId();
+      } else if (this.isUpsert) {
+        return {$setOnInsert: this.userId()};
+      } else {
+        this.unset();
+      }
+    }
   },
   name: {
     type: String,
-    label: "Name"
+    label: "Name",
+    min: 3,
+    max: 24
+  },
+  desc: {
+    type: String,
+    label: "Description",
+    min: 3,
+    max: 24
   },
   private: {
     type: Boolean,
@@ -138,7 +155,17 @@ Chat12.Chat12Rooms.attachSchema(new SimpleSchema({
   },
   participants: {
     type: [String],
-    label: "Participants"
+    label: "Participants",
+    autoform: {
+      options: function() {
+        return Meteor.users.find({_id: {$in: Chat12.getContacts()}}, {sort: Chat12.getContactOrder()}).map(function (user) {
+          return {
+            label: user.profile.name,
+            value: user._id
+          }
+        });
+      }
+    }
   },
   creationDate: {
     type: Date,
@@ -152,5 +179,10 @@ Chat12.Chat12Rooms.attachSchema(new SimpleSchema({
         this.unset();
       }
     }
+  },
+  closed: {
+    type: Boolean,
+    label: "Closed",
+    defaultValue: false
   }
 }));
