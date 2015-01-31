@@ -5,7 +5,7 @@ if (typeof Chat12 === "undefined")
  * Collections
  */
 Chat12.Chat121Msgs = new Mongo.Collection("chat121Msgs");
-Chat12.Chat12RoomMsgs = new Mongo.Collection("Chat12RoomMsgs");
+Chat12.Chat12RoomMsgs = new Mongo.Collection("chat12RoomMsgs");
 Chat12.Chat12Rooms = new Mongo.Collection("chat12Rooms");
 
 /**
@@ -39,8 +39,23 @@ Chat12.Common = {
  */
 Chat12.Chat121Msgs.deny(Chat12.Common.denyAll);
 Chat12.Chat12RoomMsgs.deny(Chat12.Common.denyAll);
-Chat12.Chat12Rooms.deny(Chat12.Common.denyAll);
+//Chat12.Chat12Rooms.deny(Chat12.Common.denyAll);
 
+// Chat12Room to get used by autoform
+// TODO: remove autoform
+Chat12.Chat12Rooms.deny({
+  insert: function (userId, doc) {
+    //console.log(doc);
+    return !Chat12.Chat12Rooms.createAllow(userId, doc);
+  },
+  update: function (userId, doc, fields, modifier) { return !Chat12.Chat12Rooms.createAllow; },
+  remove: function (userId, doc) { return false; }
+});
+Chat12.Chat12Rooms.allow({
+  insert: function (userId, doc) {
+    return Chat12.Chat12Rooms.createAllow(userId, doc);
+  }
+});
 /**
  * Schema : Chat121Msgs
  */
@@ -89,7 +104,16 @@ Chat12.Chat121Msgs.attachSchema(new SimpleSchema({
 Chat12.Chat12RoomMsgs.attachSchema(new SimpleSchema({
     from: {
       type: String,
-      label: "From"
+      label: "From",
+      autoValue: function () {
+        if (this.isInsert) {
+          return Meteor.userId();
+        } else if (this.isUpsert) {
+          return {$setOnInseri: Meteor.userId()};
+        } else {
+          this.unset();
+        }
+      }
     },
   room: {
     type: String,
@@ -116,7 +140,12 @@ Chat12.Chat12RoomMsgs.attachSchema(new SimpleSchema({
     readBy: {
       type: [String],
       label: "ReadBy",
-      min: 0
+      min: 0,
+      autoValue: function() {
+        if (this.isInsert) {
+          return [Meteor.userId()];
+        }
+      }
     }
 }));
 
@@ -156,6 +185,13 @@ Chat12.Chat12Rooms.attachSchema(new SimpleSchema({
   participants: {
     type: [String],
     label: "Participants",
+    autoValue: function () {
+      if (this.value.indexOf(Meteor.userId()) === -1) {
+        var participantsWithMe = this.value;
+        participantsWithMe.push(Meteor.userId());
+        return participantsWithMe;
+      }
+    },
     autoform: {
       options: function() {
         return Meteor.users.find({_id: {$in: Chat12.getContacts()}}, {sort: Chat12.getContactOrder()}).map(function (user) {

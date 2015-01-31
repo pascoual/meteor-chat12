@@ -19,8 +19,10 @@ if (typeof Chat12 === "undefined")
  * }
  */
 Chat12.init = function (options) {
+  Chat12.allow = options.allow;
   Chat12.Chat121Msgs.sendAllow = options.send121Allow;
   Chat12.Chat12RoomMsgs.sendAllow = options.send12RoomAllow;
+  // createAllow(userId, room)
   Chat12.Chat12Rooms.createAllow = options.createRoomAllow;
   // getContacts = function ([userId])
   // Location : Client + Server
@@ -46,6 +48,13 @@ Chat12.init = function (options) {
 /*  Chat12.getRooms = options.getRooms;*/
 }
 
+Chat12.getRooms = function (userId) {
+  return Chat12.Chat12Rooms.find({
+    $or: [{participants: {$in: [userId]}}, {creator: userId}],
+    closed: false
+  }).map(function (room) {return room._id});
+}
+
 /**
  * Generic CallBack
  */
@@ -65,6 +74,9 @@ Chat12.Chat121SetRead = function (from) {
 };
 Chat12.Chat12RoomSend = function (roomId, msg) {
   Meteor.call('Chat12RoomSend', roomId, msg, Chat12.callbackGeneric);
+};
+Chat12.Chat12RoomSetRead = function (roomId) {
+  Meteor.call('Chat12RoomSetRead', roomId, Chat12.callbackGeneric);
 };
 Chat12.Chat12CreateRoom = function (name, private, participants) {
   Meteor.call('Chat12CreateRoom', name, private, participants, Chat12.callbackGeneric);
@@ -101,18 +113,30 @@ Meteor.methods({
       $push: {readBy: this.userId}
     }, {multi: true});
   },
-  Chat12RoomSend: function (roomId, msg) {
-    if (Chat12.Chat12RoomMsgs.sendAllow(this.userId, roomId))
-      Chat12.Chat12RoomMsgs.insert({from: this.userId, room: roomId, msg: msg});
-    else
-      throw new Meteor.Error( 500, 'You don\'t have right to send a message to this room' );
-  },
   /**
    * Rooms methodes
    */
+  Chat12RoomSend: function (roomId, msg) {
+    if (Chat12.Chat12RoomMsgs.sendAllow(this.userId, roomId))
+      Chat12.Chat12RoomMsgs.insert({from: this.userId, room: roomId, msg: msg},
+                                  function (err, res) {if (err) console.log(err)});
+    else
+      throw new Meteor.Error( 500, 'You don\'t have right to send a message to this room' );
+  },
+  Chat12RoomSetRead: function (roomId) {
+    Chat12.Chat12RoomMsgs.update({
+      room: roomId,
+      readBy: {$nin: [this.userId]}
+    }, {
+      $push: {readBy: this.userId}
+    }, {multi: true});
+  },
   Chat12CreateRoom: function (name, private, participants) {
     if (Chat12.Chat12Rooms.createAllow(this.userId, name, private, participants))
-      Chat12.Chat12Rooms.insert({creator: this.userId, name: name, private: private, participants: participants});
+      Chat12.Chat12Rooms.insert({
+        creator: this.userId, name: name, private: private, participants: participants
+      },
+      function (err, res) {console.log(err)});
     else
       throw new Meteor.Error( 500, 'You don\'t have right to create this Room' );
   },
