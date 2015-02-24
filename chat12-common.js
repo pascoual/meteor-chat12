@@ -44,6 +44,7 @@ Chat12.init = function (options) {
     Chat12.getContactOrder = options.getContactOrder;
     Chat12.getContactsListClass = options.getContactsListClass;
     Chat12.getRoomPortrait = options.getRoomPortrait;
+    Chat12.onMsgCallBack = options.onMsgCallBack;
   }
 /*  Chat12.getRooms = options.getRooms;*/
 }
@@ -99,7 +100,8 @@ Meteor.methods({
    * Messages
    */
   Chat121Send: function (targetUserId, msg) {
-    if (Chat12.Chat121Msgs.sendAllow(this.userId, targetUserId))
+    var self = this;
+    if (Chat12.Chat121Msgs.sendAllow(this.userId, targetUserId, self))
       Chat12.Chat121Msgs.insert({from: this.userId, to: targetUserId, msg: msg});
     else
       throw new Meteor.Error( 500, 'You don\'t have right to send a message to this user' );
@@ -117,7 +119,8 @@ Meteor.methods({
    * Rooms methodes
    */
   Chat12RoomSend: function (roomId, msg) {
-    if (Chat12.Chat12RoomMsgs.sendAllow(this.userId, roomId))
+    var self = this;
+    if (Chat12.Chat12RoomMsgs.sendAllow(this.userId, roomId, self))
       Chat12.Chat12RoomMsgs.insert({from: this.userId, room: roomId, msg: msg},
                                   function (err, res) {if (err) console.log(err)});
     else
@@ -147,8 +150,9 @@ Meteor.methods({
    * - can see the invited user
    */
   Chat12InviteToRoom: function (roomId, invitedUserId) {
+    var self = this;
     var room = Chat12.Chat12Rooms.findOne({_id: roomId});
-    if (room && room.participants.contains(invitedUserId) && Chat12.getContacts(userId).contains(invitedUserId))
+    if (room && room.participants.contains(invitedUserId) && Chat12.getContacts(userId, self).contains(invitedUserId))
       Chat12.Chat12Rooms.update({_id: roomId}, {$push: {participants: invitedUserId}});
     else
       throw new Meteor.Error( 500, 'You don\'t have right to add user to this room' );
