@@ -19,7 +19,7 @@ Meteor.publish("chat12GetOnes", function () {
 Meteor.publish("chat12GetUnreadMessages", function () {
   if (!this.userId)
     return;
-  return Chat12.Chat121Msgs.find({from: {$in: Chat12.getContacts(this.userId)}, to: this.userId, readBy: {$nin: [this.userId]}});
+  return Chat12.Chat121Msgs.find({from: {$in: Chat12.getContacts(this.userId)}, to: this.userId, readBy: {$nin: [this.userId]}, removed: {$ne: true}});
 });
 
 /**
@@ -29,7 +29,7 @@ Meteor.publish("chat12GetMessages", function (to, msgNb) {
   if (!this.userId || !to)
     return;
   var limit = msgNb ? msgNb : 100;
-  return Chat12.Chat121Msgs.find({$or: [{from: this.userId, to: to}, {from: to, to: this.userId}]}, {sort: {date: -1}, limit: limit});
+  return Chat12.Chat121Msgs.find({$or: [{from: this.userId, to: to}, {from: to, to: this.userId}], removed: {$ne: true}}, {sort: {date: -1}, limit: limit});
 });
 
 /**
@@ -53,7 +53,7 @@ Meteor.publish("chat12GetRoomMessages", function (roomId, msgNb) {
     $or: [{participants: {$in: [this.userId]}}, {creator: this.userId}],
     closed: false
   }).map(function (room) {return room._id});*/
-  return Chat12.Chat12RoomMsgs.find({room: roomId}, {sort: {date: -1}, limit: limit});
+  return Chat12.Chat12RoomMsgs.find({room: roomId, removed: {$ne: true}}, {sort: {date: -1}, limit: limit});
 });
 
 /**
